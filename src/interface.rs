@@ -1,8 +1,8 @@
-use crate::error::SSD1677Error;
-use core::fmt::Debug;
+//! Hardware interface to the display
+//!
+//! This file implements the functions required to communicate and interface with the SSD1677
+
 use embedded_hal;
-//use embedded_hal::digital::{Error, InputPin, OutputPin};
-//use embedded_hal::spi::SpiDevice;
 
 // 10ms reset delay as seen in box 2 in chapter 9.1 in the SSD1677 datasheet
 const RESET_DELAY_MS: u8 = 10;
