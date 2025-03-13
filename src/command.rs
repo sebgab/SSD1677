@@ -14,25 +14,28 @@ where
 /// This configures ohw the c4)roller auto-increments the row and column address when data is
 /// written using the `WriteImageData` command.
 #[derive(Clone, Copy)]
+#[repr(u8)]
 pub enum IncrementAxis {
     /// X direction
-    Horizontal,
+    Horizontal = 0b0,
     /// Y direction
-    Vertical,
+    Vertical = 0b1,
 }
 
 #[derive(Clone, Copy)]
+#[repr(u8)]
 pub enum DataEntryMode {
-    DecrementXDecrementY,
-    IncrementXDecrementY,
-    DecrementXIncrementY,
-    IncrementXIncrementY,
+    DecrementXDecrementY = 0b00,
+    IncrementXDecrementY = 0b01,
+    DecrementXIncrementY = 0b10,
+    IncrementXIncrementY = 0b11,
 }
 
 #[derive(Clone, Copy)]
+#[repr(u8)]
 pub enum TemperatureSensor {
-    Internal,
-    External,
+    Internal = 0x80,
+    External = 48,
 }
 
 /// Ram display update option, see page 27 in the datasheet
@@ -54,9 +57,45 @@ pub enum DeepSleepMode {
 }
 
 #[derive(Clone, Copy)]
+#[repr(u8)]
 pub enum BoosterInrush {
-    Level1,
-    Level2,
+    Level1 = 0x40,
+    Level2 = 0x80,
+}
+
+/// Select VBD option
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum WaveformVDBOption {
+    /// Use the GS transision defined by `VDBGSTransitionSetting`
+    Transition = 0b00,
+    /// Use the fixed level defined by `VDBFixedLevelSetting`
+    Fixed = 0b01,
+    VCOM = 0b10,
+    /// POR Value
+    HiZ = 0b11,
+}
+
+/// Fix Level Setting for VBD
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum VDBFixedLevelSetting {
+    /// POR
+    VSS = 0b00,
+    VSH1 = 0b01,
+    VSL = 0b10,
+    VSH2 = 0b11,
+}
+
+/// GS Transition setting for VBD
+#[derive(Clone, Copy)]
+#[repr(u8)]
+pub enum VDBGSTransitionSetting {
+    /// POR value
+    LUT0 = 0b00,
+    LUT1 = 0b01,
+    LUT2 = 0b10,
+    LUT3 = 0b11,
 }
 
 /// A command that can be issued to the SSD1677 controller
@@ -79,9 +118,70 @@ where
         Ok(())
     }
 
+    pub fn set_driver_output_control_from_width(&mut self, width: u16) -> Result<(), SPI::Error> {
+        // This command set is based on the example code for the STM32 frmo here:
+        // https://www.good-display.com/product/457.html
+        self.send_command(0x01)?;
+        self.send_data(&[((width - 1) % 256).try_into().unwrap()])?;
+        self.send_data(&[((width - 1) / 256).try_into().unwrap()])?;
+        self.send_data(&[0x02])?;
+
+        Ok(())
+    }
+
+    /// Define the data entry mode settings
+    pub fn set_data_entry_mode(
+        &mut self,
+        data_entry_mode: DataEntryMode,
+        increment_axis: IncrementAxis,
+    ) -> Result<(), SPI::Error> {
+        // Send the config command
+        self.send_command(0x11)?;
+
+        // Structure the config data
+        let config_option: u8 = ((increment_axis as u8) << 2) | data_entry_mode as u8;
+
+        // Send the config
+        self.send_data(&[config_option])?;
+
+        Ok(())
+    }
+
+    /// Write data to the black and white RAM buffer
     pub fn write_ram_black_and_white(&mut self, data: &[u8]) -> Result<(), SPI::Error> {
         self.send_command(0x24)?;
         self.send_data(data)?;
+        Ok(())
+    }
+
+    /// Fill the red RAM buffer with a single value
+    pub fn auto_write_ram_red_regular_pattern(&mut self, value: u8) -> Result<(), SPI::Error> {
+        self.send_command(0x46)?;
+        self.send_data(&[value])?;
+        Ok(())
+    }
+
+    /// Fill the black and white RAM buffer with a single value
+    pub fn auto_write_ram_black_and_white_regular_pattern(
+        &mut self,
+        value: u8,
+    ) -> Result<(), SPI::Error> {
+        self.send_command(0x47)?;
+        self.send_data(&[value])?;
+        Ok(())
+    }
+
+    /// Set the current X axis count
+    pub fn set_ram_x_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
+        self.send_command(0x4E)?;
+        self.send_data(&offset.to_be_bytes())?;
+        Ok(())
+    }
+
+    /// Set the current Y axis count
+    pub fn set_ram_y_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
+        self.send_command(0x4F)?;
+        self.send_data(&offset.to_be_bytes())?;
         Ok(())
     }
 
@@ -92,11 +192,11 @@ where
         Ok(())
     }
 
-    // Specify the start/end positions of the window address in the X direction by an address unit
-    // for RAM.
-    //
-    // # Note
-    // Start any end values are 10-bit, bit ranges 11-16 will be discarded.
+    /// Specify the start/end positions of the window address in the X direction by an address unit
+    /// for RAM.
+    ///
+    /// # Note
+    /// Start any end values are 10-bit, bit ranges 11-16 will be discarded.
     pub fn set_ram_x_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
         // Split the input value to bytes
         let [start_hi, start_lo] = start.to_be_bytes();
@@ -111,11 +211,11 @@ where
         Ok(())
     }
 
-    // Specify the start/end positions of the window address in the Y direction by an address unit
-    // for RAM.
-    //
-    // # Note
-    // Start any end values are 10-bit, bit ranges 11-16 will be discarded.
+    /// Specify the start/end positions of the window address in the Y direction by an address unit
+    /// for RAM.
+    ///
+    /// # Note
+    /// Start any end values are 10-bit, bit ranges 11-16 will be discarded.
     pub fn set_ram_y_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
         // Split the input value to bytes
         let [start_hi, start_lo] = start.to_be_bytes();
@@ -126,6 +226,18 @@ where
 
         self.send_command(0x45)?;
         self.send_data(&data)?;
+
+        Ok(())
+    }
+
+    /// Set the start and end RAM addresses for both X and Y based on the display dimentions given
+    pub fn set_ram_address_based_on_size(
+        &mut self,
+        width: u16,
+        height: u16,
+    ) -> Result<(), SPI::Error> {
+        self.set_ram_x_address(0, width - 1)?;
+        self.set_ram_y_address(0, height - 1)?;
 
         Ok(())
     }
@@ -214,12 +326,77 @@ where
         Ok(())
     }
 
+    /// Perform a hardware reset
+    pub fn reset_hardware<D: embedded_hal::delay::DelayNs>(&mut self, delay: &mut D) {
+        use crate::interface::RESET_DELAY_MS;
+
+        // Disable the display, the wait for the controller to catch up
+        self.reset_pin.set_low().unwrap();
+        delay.delay_ms(RESET_DELAY_MS.into());
+        // Enable the display, the wait for the controller to catch up
+        self.reset_pin.set_high().unwrap();
+        delay.delay_ms(RESET_DELAY_MS.into());
+    }
+
+    /// Perform a software reset.
+    /// This resets all parameters except deep sleep mode to their default values.
+    /// RAM content is not affected.
+    /// BUSY will be high while reset is in progress
+    pub fn reset_software(&mut self) -> Result<(), SPI::Error> {
+        // Tell the device to soft reset
+        self.send_command(0x12)?;
+
+        // Wait for the soft reset to be over
+        self.busy_wait();
+
+        Ok(())
+    }
+
+    /// Select border waveform for VBD
+    pub fn set_border_waveform_control(
+        &mut self,
+        vdb_option: WaveformVDBOption,
+        fixed_level_setting: VDBFixedLevelSetting,
+        transition_setting: VDBGSTransitionSetting,
+    ) -> Result<(), SPI::Error> {
+        self.send_command(0x3C)?;
+
+        // Create the data packet
+        let data = ((vdb_option as u8) << 6)
+            | ((fixed_level_setting as u8) << 4)
+            | (transition_setting as u8);
+
+        self.send_data(&[data])?;
+
+        Ok(())
+    }
+
+    /// Specify which temperature sensor the display uses
+    pub fn set_temperature_sensor(&mut self, sensor: TemperatureSensor) -> Result<(), SPI::Error> {
+        self.send_command(0x18)?;
+        self.send_data(&[sensor as u8])?;
+        Ok(())
+    }
+
+    /// Control the inrush current for the booster
+    pub fn set_booster_soft_start_control(
+        &mut self,
+        inrush: BoosterInrush,
+    ) -> Result<(), SPI::Error> {
+        // Frist four bytes are always the same as per datasheet page 24
+        // Last bytes depend on inrush mode, these are defined in the enum
+        let control_value: [u8; 5] = [0xAE, 0xC7, 0xC3, 0xC0, inrush as u8];
+
+        self.send_command(0x0C)?;
+        self.send_data(&control_value)?;
+
+        Ok(())
+    }
+
     /*
 
 
 
-    /// Control the inrush current for the booster
-    BoosterSoftStartControl(BoosterInrush),
 
     /// Set the deep sleep mode
     DeepSleepMode(DeepSleepMode),
@@ -227,14 +404,7 @@ where
     /// Set the data entry mode and the increment axis
     DataEntryMode(DataEntryMode, IncrementAxis),
 
-    /// Perform a software reset.
-    /// This resets all parameters except deep sleep mode to their default values.
-    /// RAM content is not affected.
-    /// BUSY will be high while reset is in progress
-    SoftReset,
 
-    /// Specify which temperature sensor the display uses
-    TemperatureSensorSelection(TemperatureSensor),
 
     /// Write to temperature sensor register
     /// Please note that the register is 12-bit

@@ -5,7 +5,7 @@
 use embedded_hal;
 
 // 10ms reset delay as seen in box 2 in chapter 9.1 in the SSD1677 datasheet
-const RESET_DELAY_MS: u8 = 10;
+pub const RESET_DELAY_MS: u8 = 10;
 
 /// Trait implemented by displays for core functionality
 pub trait DisplayInterface {
@@ -31,7 +31,7 @@ pub struct Interface4Pin<SPI, OUT, IN> {
     /// Data / Command pin, 0=command, 1=data
     data_command_pin: OUT,
     /// The reset pin for the display
-    reset_pin: OUT,
+    pub reset_pin: OUT,
     /// The pin from the controller indicating busy
     busy_pin: IN,
 }
