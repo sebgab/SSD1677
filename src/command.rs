@@ -112,7 +112,7 @@ where
         scanning_sequence_and_direction: u8,
     ) -> Result<(), SPI::Error> {
         self.send_command(0x01)?;
-        let [upper, lower] = max_gate_lines.to_be_bytes();
+        let [upper, lower] = max_gate_lines.to_le_bytes();
         self.send_data(&[upper, lower, scanning_sequence_and_direction])?;
 
         Ok(())
@@ -174,14 +174,14 @@ where
     /// Set the current X axis count
     pub fn set_ram_x_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
         self.send_command(0x4E)?;
-        self.send_data(&offset.to_be_bytes())?;
+        self.send_data(&offset.to_le_bytes())?;
         Ok(())
     }
 
     /// Set the current Y axis count
     pub fn set_ram_y_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
         self.send_command(0x4F)?;
-        self.send_data(&offset.to_be_bytes())?;
+        self.send_data(&offset.to_le_bytes())?;
         Ok(())
     }
 
@@ -199,11 +199,11 @@ where
     /// Start any end values are 10-bit, bit ranges 11-16 will be discarded.
     pub fn set_ram_x_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
         // Split the input value to bytes
-        let [start_hi, start_lo] = start.to_be_bytes();
-        let [end_hi, end_lo] = end.to_be_bytes();
+        let [start_hi, start_lo] = start.to_le_bytes();
+        let [end_hi, end_lo] = end.to_le_bytes();
 
         // Create the data
-        let data = [start_lo, start_hi, (end_lo & 0b00111111), end_hi];
+        let data = [start_hi, start_lo, end_hi, (end_lo & 0b00111111)];
 
         self.send_command(0x44)?;
         self.send_data(&data)?;
@@ -218,11 +218,11 @@ where
     /// Start any end values are 10-bit, bit ranges 11-16 will be discarded.
     pub fn set_ram_y_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
         // Split the input value to bytes
-        let [start_hi, start_lo] = start.to_be_bytes();
-        let [end_hi, end_lo] = end.to_be_bytes();
+        let [start_hi, start_lo] = start.to_le_bytes();
+        let [end_hi, end_lo] = end.to_le_bytes();
 
         // Create the data
-        let data = [start_lo, start_hi, (end_lo & 0b00111111), end_hi];
+        let data = [start_hi, start_lo, end_hi, (end_lo & 0b00111111)];
 
         self.send_command(0x45)?;
         self.send_data(&data)?;
@@ -236,8 +236,8 @@ where
         width: u16,
         height: u16,
     ) -> Result<(), SPI::Error> {
-        self.set_ram_x_address(0, width - 1)?;
-        self.set_ram_y_address(0, height - 1)?;
+        self.set_ram_x_address(0, height - 1)?;
+        self.set_ram_y_address(0, width - 1)?;
 
         Ok(())
     }

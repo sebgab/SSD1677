@@ -92,6 +92,10 @@ where
         self.data_command_pin.set_low().unwrap();
         // Send tthe data
         self.write(&[command])?;
+
+        // Wait for the device to be ready
+        self.busy_wait();
+
         Ok(())
     }
 
@@ -100,6 +104,9 @@ where
         self.data_command_pin.set_high().unwrap();
         // Send the data
         self.write(data)?;
+
+        // Wait for the device to be ready
+        self.busy_wait();
 
         Ok(())
     }
