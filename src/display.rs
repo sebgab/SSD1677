@@ -153,6 +153,15 @@ where
     ) -> Result<(), <I as DisplayInterface>::Error> {
         // Write the black and white RAM if provided
         if let Some(buffer) = bw_buffer {
+            // Reset the address
+            self.interface
+                .set_ram_x_count(0)
+                .expect("Failed to set RAM address for x");
+            self.interface
+                .set_ram_y_count(0)
+                .expect("Failed to set RAM address for y");
+
+            // Copy the data
             self.interface
                 .write_ram_black_and_white(buffer)
                 .expect("Failed to write black and white RAM buffer");
@@ -160,10 +169,22 @@ where
 
         // Write the red RAM if provided
         if let Some(buffer) = red_buffer {
+            // Reset the address
+            self.interface
+                .set_ram_x_count(0)
+                .expect("Failed to set RAM address for x");
+            self.interface
+                .set_ram_y_count(0)
+                .expect("Failed to set RAM address for y");
+
+            // Copy the data
             self.interface
                 .write_ram_red(buffer)
                 .expect("Failed to write RED RAM buffer");
         }
+
+        // Set the "slow" update mode
+        self.interface.update_display_option2(0xF7).unwrap();
 
         // Refresh the display
         self.interface

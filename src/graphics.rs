@@ -1,0 +1,162 @@
+use core::usize;
+
+use crate::command::DisplayCommands;
+use crate::display::Display;
+use crate::interface::DisplayInterface;
+use embedded_hal;
+
+#[cfg(feature = "graphics")]
+use embedded_graphics_core::{pixelcolor::BinaryColor, prelude::*};
+
+/// A display that holds buffers for drawing into and updating the display.
+///
+/// When the `graphics` feature is enabled `GraphicsDisplay` implements the `Draw` traif from
+/// [embedded-graphics-core](https://crates.io/crates/embedded-graphics-core). This allows
+/// for shapes, and text to be rendered on the dsiplay
+pub struct GraphicsDisplayBlackAndWhite<'a, I, SPI>
+where
+    SPI: embedded_hal::spi::SpiDevice,
+    I: DisplayInterface + DisplayCommands<SPI>,
+{
+    display: Display<I, SPI>,
+    bw_buffer: &'a mut [u8],
+    // TODO: Implement RED support
+}
+
+impl<'a, I, SPI> GraphicsDisplayBlackAndWhite<'a, I, SPI>
+where
+    SPI: embedded_hal::spi::SpiDevice,
+    I: DisplayInterface + DisplayCommands<SPI>,
+{
+    /// Promote a `Display` to a `GraphicsDisplayBlackAndWhite`.
+    ///
+    /// The B/W buffer musb be provided. It should be `rows` * `cols` / 8 in length.
+    pub fn new(display: Display<I, SPI>, bw_buffer: &'a mut [u8]) -> Self {
+        GraphicsDisplayBlackAndWhite { display, bw_buffer }
+    }
+
+    /// Update the display by writing the buffer to the controller
+    pub fn update(&mut self) -> Result<(), <I as DisplayInterface>::Error> {
+        self.display.update(Some(self.bw_buffer), None)
+    }
+
+    #[cfg(not(feature = "graphics"))]
+    /// Clear the buffer, filling it with black or white depending on the value of `fill_white`.
+    pub fn clear(&mut self, fill_white: bool) {
+        // Figure out the fill value
+        let fill_value: u8 = match fill_white {
+            true => 0xFF,
+            false => 0x00,
+        };
+
+        // Loop through the buffer
+        for byte in &mut self.bw_buffer.as_mut().iter_mut() {
+            // Set the value of the byte
+            *byte = fill_value;
+        }
+    }
+
+    #[cfg(feature = "graphics")]
+    /// Clear the buffer, filling it with a single color given by the `BinaryColor` type.
+    pub fn clear(&mut self, color: BinaryColor) {
+        // Figure out the fill value
+        let fill_value: u8 = match color {
+            BinaryColor::On => 0xFF,
+            BinaryColor::Off => 0x00,
+        };
+
+        // Loop through the buffer
+        for byte in &mut self.bw_buffer.as_mut().iter_mut() {
+            // Set the value of the byte
+            *byte = fill_value;
+        }
+    }
+
+    fn set_pixel(&mut self, x: u32, y: u32, color: BinaryColor) {
+        // TODO: Deal with rotation
+
+        // // Figure out the index in the buffer to change
+        // let buffer_index =
+        //     y/8 * self.display.cols() as u32  // Skip the y directon by the number of cols per y , divide by 8 as
+        //                                     // there are 8 pixels per byte
+        //     + x/8                           // Skip the x direction, divide by 8 as there are 8 pixels
+        //                                     // per byte.
+        //     ;
+        // // Convert the index to usize
+        // let buffer_index: usize = buffer_index as usize;
+        //
+        // // Figure out the bit index to change
+        // let bit_index: usize = (x % 8) as usize;
+        // let mask = 0x80 >> bit_index;
+        //
+        // match color {
+        //     BinaryColor::On => {
+        //         self.bw_buffer.as_mut()[buffer_index] &= !mask;
+        //     },
+        //     BinaryColor::Off => {
+        //         self.bw_buffer.as_mut()[buffer_index] |= mask;
+        //     }
+        // }
+    }
+}
+
+impl<'a, I, SPI> core::ops::Deref for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+where
+    SPI: embedded_hal::spi::SpiDevice,
+    I: DisplayInterface + DisplayCommands<SPI>,
+{
+    type Target = Display<I, SPI>;
+
+    fn deref(&self) -> &Display<I, SPI> {
+        &self.display
+    }
+}
+
+impl<'a, I, SPI> core::ops::DerefMut for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+where
+    SPI: embedded_hal::spi::SpiDevice,
+    I: DisplayInterface + DisplayCommands<SPI>,
+{
+    fn deref_mut(&mut self) -> &mut Display<I, SPI> {
+        &mut self.display
+    }
+}
+
+#[cfg(feature = "graphics")]
+impl<'a, I, SPI> DrawTarget for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+where
+    SPI: embedded_hal::spi::SpiDevice,
+    I: DisplayInterface + DisplayCommands<SPI>,
+{
+    type Color = BinaryColor;
+    type Error = core::convert::Infallible;
+
+    fn draw_iter<Iter>(&mut self, pixels: Iter) -> Result<(), Self::Error>
+    where
+        Iter: IntoIterator<Item = Pixel<Self::Color>>,
+    {
+        let size = self.size();
+
+        for Pixel(Point { x, y }, color) in pixels {
+            let x = x as u32;
+            let y = y as u32;
+
+            if x < size.width && y < size.height {
+                self.set_pixel(x, y, color)
+            }
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "graphics")]
+impl<'a, I, SPI> OriginDimensions for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+where
+    SPI: embedded_hal::spi::SpiDevice,
+    I: DisplayInterface + DisplayCommands<SPI>,
+{
+    fn size(&self) -> Size {
+        // TODO: Handle rotation
+        Size::new(self.cols().into(), self.rows().into())
+    }
+}

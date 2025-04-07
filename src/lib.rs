@@ -1,16 +1,13 @@
 #![no_std]
 
-mod command;
+pub mod command;
 pub mod config;
-mod display;
-mod error;
-mod interface;
+pub mod display;
+pub mod error;
+pub mod graphics;
+pub mod interface;
 
-pub use command::*;
-pub use display::*;
-pub use interface::DisplayInterface;
-pub use interface::Interface4Pin;
-
+use crate::interface::Interface4Pin;
 impl<SPI, OUT, IN> Interface4Pin<SPI, OUT, IN>
 where
     SPI: embedded_hal::spi::SpiDevice,
