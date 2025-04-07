@@ -98,15 +98,92 @@ pub enum VDBGSTransitionSetting {
     LUT3 = 0b11,
 }
 
+/// The commands implemented on the display
+pub trait DisplayCommands<SPI>
+where
+    SPI: embedded_hal::spi::SpiDevice,
+{
+    fn set_driver_output_control(
+        &mut self,
+        max_gate_lines: u16,
+        scanning_sequence_and_direction: u8,
+    ) -> Result<(), SPI::Error>;
+
+    fn set_driver_output_control_from_width(&mut self, width: u16) -> Result<(), SPI::Error>;
+
+    fn set_data_entry_mode(
+        &mut self,
+        data_entry_mode: DataEntryMode,
+        increment_axis: IncrementAxis,
+    ) -> Result<(), SPI::Error>;
+
+    fn write_ram_black_and_white(&mut self, data: &[u8]) -> Result<(), SPI::Error>;
+
+    fn write_ram_red(&mut self, data: &[u8]) -> Result<(), SPI::Error>;
+
+    fn auto_write_ram_red_regular_pattern(&mut self, value: u8) -> Result<(), SPI::Error>;
+
+    fn auto_write_ram_black_and_white_regular_pattern(
+        &mut self,
+        value: u8,
+    ) -> Result<(), SPI::Error>;
+
+    fn set_ram_x_count(&mut self, offset: u16) -> Result<(), SPI::Error>;
+
+    fn set_ram_y_count(&mut self, offset: u16) -> Result<(), SPI::Error>;
+
+    fn refresh_display(&mut self) -> Result<(), SPI::Error>;
+
+    fn set_ram_x_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error>;
+
+    fn set_ram_y_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error>;
+
+    fn set_ram_address_based_on_size(&mut self, width: u16, height: u16) -> Result<(), SPI::Error>;
+
+    fn nop(&mut self) -> Result<(), SPI::Error>;
+
+    fn set_gate_driving_voltage(&mut self, voltage: f32) -> Result<(), SPI::Error>;
+
+    fn set_source_driving_voltage(
+        &mut self,
+        vsh1_voltage: f32,
+        vsh2_voltage: f32,
+        vsl_voltage: f32,
+    ) -> Result<(), SPI::Error>;
+
+    fn update_display_option1(
+        &mut self,
+        black_and_white_option: RamOption,
+        red_option: RamOption,
+    ) -> Result<(), SPI::Error>;
+
+    fn update_display_option2(&mut self, option: u8) -> Result<(), SPI::Error>;
+
+    fn reset_hardware<D: embedded_hal::delay::DelayNs>(&mut self, delay: &mut D);
+
+    fn reset_software(&mut self) -> Result<(), SPI::Error>;
+
+    fn set_border_waveform_control(
+        &mut self,
+        vdb_option: WaveformVDBOption,
+        fixed_level_setting: VDBFixedLevelSetting,
+        transition_setting: VDBGSTransitionSetting,
+    ) -> Result<(), SPI::Error>;
+
+    fn set_temperature_sensor(&mut self, sensor: TemperatureSensor) -> Result<(), SPI::Error>;
+
+    fn set_booster_soft_start_control(&mut self, inrush: BoosterInrush) -> Result<(), SPI::Error>;
+}
+
 /// A command that can be issued to the SSD1677 controller
-impl<SPI, OUT, IN> Interface4Pin<SPI, OUT, IN>
+impl<SPI, OUT, IN> DisplayCommands<SPI> for Interface4Pin<SPI, OUT, IN>
 where
     SPI: embedded_hal::spi::SpiDevice,
     OUT: embedded_hal::digital::OutputPin,
     IN: embedded_hal::digital::InputPin,
 {
     /// Set the MUX of gate lines, scanning sequence and direction
-    pub fn set_driver_output_control(
+    fn set_driver_output_control(
         &mut self,
         max_gate_lines: u16,
         scanning_sequence_and_direction: u8,
@@ -118,7 +195,7 @@ where
         Ok(())
     }
 
-    pub fn set_driver_output_control_from_width(&mut self, width: u16) -> Result<(), SPI::Error> {
+    fn set_driver_output_control_from_width(&mut self, width: u16) -> Result<(), SPI::Error> {
         // This command set is based on the example code for the STM32 frmo here:
         // https://www.good-display.com/product/457.html
         self.send_command(0x01)?;
@@ -130,7 +207,7 @@ where
     }
 
     /// Define the data entry mode settings
-    pub fn set_data_entry_mode(
+    fn set_data_entry_mode(
         &mut self,
         data_entry_mode: DataEntryMode,
         increment_axis: IncrementAxis,
@@ -148,21 +225,28 @@ where
     }
 
     /// Write data to the black and white RAM buffer
-    pub fn write_ram_black_and_white(&mut self, data: &[u8]) -> Result<(), SPI::Error> {
+    fn write_ram_black_and_white(&mut self, data: &[u8]) -> Result<(), SPI::Error> {
         self.send_command(0x24)?;
         self.send_data(data)?;
         Ok(())
     }
 
+    /// Write data to the red RAM buffer
+    fn write_ram_red(&mut self, data: &[u8]) -> Result<(), SPI::Error> {
+        self.send_command(0x26)?;
+        self.send_data(data)?;
+        Ok(())
+    }
+
     /// Fill the red RAM buffer with a single value
-    pub fn auto_write_ram_red_regular_pattern(&mut self, value: u8) -> Result<(), SPI::Error> {
+    fn auto_write_ram_red_regular_pattern(&mut self, value: u8) -> Result<(), SPI::Error> {
         self.send_command(0x46)?;
         self.send_data(&[value])?;
         Ok(())
     }
 
     /// Fill the black and white RAM buffer with a single value
-    pub fn auto_write_ram_black_and_white_regular_pattern(
+    fn auto_write_ram_black_and_white_regular_pattern(
         &mut self,
         value: u8,
     ) -> Result<(), SPI::Error> {
@@ -172,20 +256,20 @@ where
     }
 
     /// Set the current X axis count
-    pub fn set_ram_x_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
+    fn set_ram_x_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
         self.send_command(0x4E)?;
         self.send_data(&offset.to_le_bytes())?;
         Ok(())
     }
 
     /// Set the current Y axis count
-    pub fn set_ram_y_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
+    fn set_ram_y_count(&mut self, offset: u16) -> Result<(), SPI::Error> {
         self.send_command(0x4F)?;
         self.send_data(&offset.to_le_bytes())?;
         Ok(())
     }
 
-    pub fn refresh_display(&mut self) -> Result<(), SPI::Error> {
+    fn refresh_display(&mut self) -> Result<(), SPI::Error> {
         // Send the refesh command
         self.send_command(0x20)?;
         self.busy_wait();
@@ -197,7 +281,7 @@ where
     ///
     /// # Note
     /// Start any end values are 10-bit, bit ranges 11-16 will be discarded.
-    pub fn set_ram_x_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
+    fn set_ram_x_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
         // Split the input value to bytes
         let [start_hi, start_lo] = start.to_le_bytes();
         let [end_hi, end_lo] = end.to_le_bytes();
@@ -216,7 +300,7 @@ where
     ///
     /// # Note
     /// Start any end values are 10-bit, bit ranges 11-16 will be discarded.
-    pub fn set_ram_y_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
+    fn set_ram_y_address(&mut self, start: u16, end: u16) -> Result<(), SPI::Error> {
         // Split the input value to bytes
         let [start_hi, start_lo] = start.to_le_bytes();
         let [end_hi, end_lo] = end.to_le_bytes();
@@ -231,11 +315,7 @@ where
     }
 
     /// Set the start and end RAM addresses for both X and Y based on the display dimentions given
-    pub fn set_ram_address_based_on_size(
-        &mut self,
-        width: u16,
-        height: u16,
-    ) -> Result<(), SPI::Error> {
+    fn set_ram_address_based_on_size(&mut self, width: u16, height: u16) -> Result<(), SPI::Error> {
         self.set_ram_x_address(0, height - 1)?;
         self.set_ram_y_address(0, width - 1)?;
 
@@ -244,7 +324,7 @@ where
 
     // No operation instruction, does nothing.
     // It can be used to terminate Frame Memory Write or Read commands
-    pub fn nop(&mut self) -> Result<(), SPI::Error> {
+    fn nop(&mut self) -> Result<(), SPI::Error> {
         self.send_command(0x7F)?;
 
         Ok(())
@@ -252,7 +332,7 @@ where
 
     /// Set the gate driving voltage
     /// Valid values are between 12 and 20 in increments of 0.5 volts
-    pub fn set_gate_driving_voltage(&mut self, voltage: f32) -> Result<(), SPI::Error> {
+    fn set_gate_driving_voltage(&mut self, voltage: f32) -> Result<(), SPI::Error> {
         // Validate that it is within range
         // If not, set the voltage to the POR value of 20V
         let value: u8 = match voltage {
@@ -291,7 +371,7 @@ where
     ///     VSH2 = 2.4 to 17 (increments of 0.1 between 2.4 and 9 V, increments of 0.2 from
     ///     thereon)
     ///     VSL = -9 to -17 (increments of 0.5)
-    pub fn set_source_driving_voltage(
+    fn set_source_driving_voltage(
         &mut self,
         vsh1_voltage: f32,
         vsh2_voltage: f32,
@@ -301,7 +381,7 @@ where
     }
 
     /// Set RAM content options for update display command.
-    pub fn update_display_option1(
+    fn update_display_option1(
         &mut self,
         black_and_white_option: RamOption,
         red_option: RamOption,
@@ -319,7 +399,7 @@ where
 
     /// Set display update sequence option
     /// See datasheet entry for what values mean
-    pub fn update_display_option2(&mut self, option: u8) -> Result<(), SPI::Error> {
+    fn update_display_option2(&mut self, option: u8) -> Result<(), SPI::Error> {
         self.send_command(0x22)?;
         self.send_data(&[option])?;
 
@@ -327,7 +407,7 @@ where
     }
 
     /// Perform a hardware reset
-    pub fn reset_hardware<D: embedded_hal::delay::DelayNs>(&mut self, delay: &mut D) {
+    fn reset_hardware<D: embedded_hal::delay::DelayNs>(&mut self, delay: &mut D) {
         use crate::interface::RESET_DELAY_MS;
 
         // Disable the display, the wait for the controller to catch up
@@ -342,7 +422,7 @@ where
     /// This resets all parameters except deep sleep mode to their default values.
     /// RAM content is not affected.
     /// BUSY will be high while reset is in progress
-    pub fn reset_software(&mut self) -> Result<(), SPI::Error> {
+    fn reset_software(&mut self) -> Result<(), SPI::Error> {
         // Tell the device to soft reset
         self.send_command(0x12)?;
 
@@ -353,7 +433,7 @@ where
     }
 
     /// Select border waveform for VBD
-    pub fn set_border_waveform_control(
+    fn set_border_waveform_control(
         &mut self,
         vdb_option: WaveformVDBOption,
         fixed_level_setting: VDBFixedLevelSetting,
@@ -372,17 +452,14 @@ where
     }
 
     /// Specify which temperature sensor the display uses
-    pub fn set_temperature_sensor(&mut self, sensor: TemperatureSensor) -> Result<(), SPI::Error> {
+    fn set_temperature_sensor(&mut self, sensor: TemperatureSensor) -> Result<(), SPI::Error> {
         self.send_command(0x18)?;
         self.send_data(&[sensor as u8])?;
         Ok(())
     }
 
     /// Control the inrush current for the booster
-    pub fn set_booster_soft_start_control(
-        &mut self,
-        inrush: BoosterInrush,
-    ) -> Result<(), SPI::Error> {
+    fn set_booster_soft_start_control(&mut self, inrush: BoosterInrush) -> Result<(), SPI::Error> {
         // Frist four bytes are always the same as per datasheet page 24
         // Last bytes depend on inrush mode, these are defined in the enum
         let control_value: [u8; 5] = [0xAE, 0xC7, 0xC3, 0xC0, inrush as u8];

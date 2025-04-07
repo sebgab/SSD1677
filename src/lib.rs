@@ -1,10 +1,13 @@
 #![no_std]
 
 mod command;
+pub mod config;
+mod display;
 mod error;
 mod interface;
 
 pub use command::*;
+pub use display::*;
 pub use interface::DisplayInterface;
 pub use interface::Interface4Pin;
 
