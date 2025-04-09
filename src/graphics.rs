@@ -1,7 +1,7 @@
 use core::usize;
 
 use crate::command::DisplayCommands;
-use crate::display::Display;
+use crate::display::{Display, Rotation};
 use crate::interface::DisplayInterface;
 use embedded_hal;
 
@@ -40,6 +40,23 @@ where
         self.display.update(Some(self.bw_buffer), None)
     }
 
+    /// DO NOT USE, if this made it into prod it is a mistake...
+    // pub fn sebtest(&mut self) -> Result<(), <I as DisplayInterface>::Error> {
+    // Fill one and a half complete "line" (y)
+    // for i in 0..90 {
+    //     // Several lines down
+    //     self.bw_buffer.as_mut()[i + 60 * 200] = 0x00;
+    // }
+
+    // // Fill one and a half complete "line" (x)
+    // for i in 0..150 {
+    //     // One hundred lines down
+    //     self.bw_buffer.as_mut()[i + 100 * 400] = 0x00;
+    // }
+
+    //     self.display.update(Some(self.bw_buffer), None)
+    // }
+
     #[cfg(not(feature = "graphics"))]
     /// Clear the buffer, filling it with black or white depending on the value of `fill_white`.
     pub fn clear(&mut self, fill_white: bool) {
@@ -61,8 +78,8 @@ where
     pub fn clear(&mut self, color: BinaryColor) {
         // Figure out the fill value
         let fill_value: u8 = match color {
-            BinaryColor::On => 0xFF,
-            BinaryColor::Off => 0x00,
+            BinaryColor::On => 0x00,
+            BinaryColor::Off => 0xFF,
         };
 
         // Loop through the buffer
@@ -72,10 +89,12 @@ where
         }
     }
 
-    fn set_pixel(&mut self, x: u32, y: u32, color: BinaryColor) {
+    pub fn set_pixel(&mut self, x: u32, y: u32, color: BinaryColor) {
+        // The display is by default horizontal
+
         // TODO: Deal with rotation
 
-        // // Figure out the index in the buffer to change
+        // Figure out the index in the buffer to change
         // let buffer_index =
         //     y/8 * self.display.cols() as u32  // Skip the y directon by the number of cols per y , divide by 8 as
         //                                     // there are 8 pixels per byte
@@ -84,19 +103,24 @@ where
         //     ;
         // // Convert the index to usize
         // let buffer_index: usize = buffer_index as usize;
-        //
-        // // Figure out the bit index to change
-        // let bit_index: usize = (x % 8) as usize;
-        // let mask = 0x80 >> bit_index;
-        //
-        // match color {
-        //     BinaryColor::On => {
-        //         self.bw_buffer.as_mut()[buffer_index] &= !mask;
-        //     },
-        //     BinaryColor::Off => {
-        //         self.bw_buffer.as_mut()[buffer_index] |= mask;
-        //     }
-        // }
+
+        let (index, bit) = rotation(
+            x,
+            y,
+            self.cols() as u32,
+            self.rows() as u32,
+            Rotation::Rotate0,
+        );
+        let index = index as usize;
+
+        match color {
+            BinaryColor::On => {
+                self.bw_buffer.as_mut()[index] &= !bit;
+            }
+            BinaryColor::Off => {
+                self.bw_buffer.as_mut()[index] |= bit;
+            }
+        }
     }
 }
 
@@ -119,6 +143,18 @@ where
 {
     fn deref_mut(&mut self) -> &mut Display<I, SPI> {
         &mut self.display
+    }
+}
+
+fn rotation(x: u32, y: u32, width: u32, height: u32, rotation: Rotation) -> (u32, u8) {
+    match rotation {
+        Rotation::Rotate0 => (x / 8 + (width / 8) * y, 0x80 >> (x % 8)),
+        Rotation::Rotate90 => ((width - 1 - y) / 8 + (width / 8) * x, 0x01 << (y % 8)),
+        Rotation::Rotate180 => (
+            ((width / 8) * height - 1) - (x / 8 + (width / 8) * y),
+            0x01 << (x % 8),
+        ),
+        Rotation::Rotate270 => (y / 8 + (height - 1 - x) * (width / 8), 0x80 >> (y % 8)),
     }
 }
 
@@ -145,6 +181,7 @@ where
                 self.set_pixel(x, y, color)
             }
         }
+        // TODO: Call display update function from here
         Ok(())
     }
 }

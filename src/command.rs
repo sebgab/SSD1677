@@ -196,7 +196,7 @@ where
     }
 
     fn set_driver_output_control_from_width(&mut self, width: u16) -> Result<(), SPI::Error> {
-        // This command set is based on the example code for the STM32 frmo here:
+        // This command set is based on the example code for the STM32 from here:
         // https://www.good-display.com/product/457.html
         self.send_command(0x01)?;
         self.send_data(&[((width - 1) % 256).try_into().unwrap()])?;
