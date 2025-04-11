@@ -107,9 +107,9 @@ where
         let (index, bit) = rotation(
             x,
             y,
-            self.cols() as u32,
             self.rows() as u32,
-            Rotation::Rotate0,
+            self.cols() as u32,
+            Rotation::Rotate180,
         );
         let index = index as usize;
 
@@ -173,15 +173,20 @@ where
     {
         let size = self.size();
 
+        // Draw the image pixel by pixel
         for Pixel(Point { x, y }, color) in pixels {
             let x = x as u32;
             let y = y as u32;
 
             if x < size.width && y < size.height {
-                self.set_pixel(x, y, color)
+                self.set_pixel(x, y, color);
             }
         }
-        // TODO: Call display update function from here
+
+        // Refresh the display, ignoring any errors
+        // TODO: Handle errors
+        let _ = self.update();
+
         Ok(())
     }
 }
