@@ -47,12 +47,12 @@ impl Builder {
         ); // TODO: Figure out if this is required for SSD1677, or if it is just for SSD1675
 
         assert!(
-            dimensions.rows <= display::MAX_SOURCE_OUTPUTS,
+            dimensions.rows <= display::MAX_GATE_OUTPUTS,
             "rows must be less thn MAX_GATE_OUTPUTS"
         );
 
         assert!(
-            dimensions.cols <= display::MAX_GATE_OUTPUTS,
+            dimensions.cols <= display::MAX_SOURCE_OUTPUTS,
             "cols must be less than MAX_SOURCE_OUTPUTS"
         );
 

@@ -105,11 +105,11 @@ where
         // let buffer_index: usize = buffer_index as usize;
 
         let (index, bit) = rotation(
-            x,
+            self.cols() as u32 - x,
             y,
-            self.rows() as u32,
             self.cols() as u32,
-            Rotation::Rotate180,
+            self.rows() as u32,
+            Rotation::Rotate0,
         );
         let index = index as usize;
 

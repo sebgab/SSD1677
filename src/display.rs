@@ -97,7 +97,7 @@ where
 
         // Set gate driver output
         self.interface
-            .set_driver_output_control_from_width(self.config.dimensions.cols)
+            .set_driver_output_control_from_width(self.config.dimensions.rows)
             .expect("Failed to set gate control");
 
         // Set the data entry mode
@@ -110,7 +110,7 @@ where
 
         // Set the display RAM size
         self.interface
-            .set_ram_address_based_on_size(self.config.dimensions.cols, self.config.dimensions.rows)
+            .set_ram_address_based_on_size(self.config.dimensions.rows, self.config.dimensions.cols)
             .expect("Failed to set RAM address");
 
         // Set the panel border waveform control
