@@ -1,28 +1,42 @@
+//! This module provides the structures and functionality for managing a display
+//! using the SSD1677 controller. It includes definitions for display dimensions,
+//! rotation options, and the main [Display] struct that interfaces with the hardware.
+//!
+//! The [Display] struct is responsible for initializing the display, resetting it,
+//! and updating its contents. It uses a generic interface that implements the
+//! [DisplayInterface] and [DisplayCommands] traits, allowing for flexibility in
+//! hardware implementations.
 use crate::command;
 use crate::command::*;
 use crate::config::Config;
-use crate::interface::{self, DisplayInterface};
+use crate::interface::DisplayInterface;
 
+/// Maximum number of gate outputs for the display
 pub const MAX_GATE_OUTPUTS: u16 = 680;
+/// Maximum number of source outputs for the display
 pub const MAX_SOURCE_OUTPUTS: u16 = 960;
 
 /// The display's dimensions
 pub struct Dimensions {
     /// The number of rows in the display
-    /// Must be less than or equal MAX_GATE_OUTPUTS
+    /// Must be less than or equal [MAX_GATE_OUTPUTS]
     pub rows: u16,
 
     /// The number of columns in the display
-    /// Must be less than or equal MAX_SOURCE_OUTPUTS
+    /// Must be less than or equal [MAX_SOURCE_OUTPUTS]
     pub cols: u16,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 /// Represents the rotation of the display relative to the native orientation.
 pub enum Rotation {
+    /// No rotation
     Rotate0,
+    /// 90 degrees rotated
     Rotate90,
+    /// 180 degrees rotated
     Rotate180,
+    /// 270 degrees rotated
     Rotate270,
 }
 
@@ -39,9 +53,9 @@ where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    interface: I,
-    config: Config,
-    _phantom: core::marker::PhantomData<SPI>,
+    interface: I,   // The interface for communicating with the display
+    config: Config, // The display configuration
+    _phantom: core::marker::PhantomData<SPI>, // Phantom data to hold the SPI type
 }
 
 impl<I, SPI> Display<I, SPI>
@@ -49,9 +63,14 @@ where
     I: DisplayInterface + DisplayCommands<SPI>,
     SPI: embedded_hal::spi::SpiDevice,
 {
-    /// Create a new display instance from a `DisplayInterface` and a `Config`.
+    /// Create a new display instance from a [DisplayInterface] and a [Config].
     ///
-    /// The `Config` is created with `config::Builder`.
+    /// The [Config] is created using the [Builder](crate::config::Builder).
+    ///
+    /// # Arguments
+    ///
+    /// * `interface` - The interface for communicating with the display.
+    /// * `config` - The configuration for the display.
     pub fn new(interface: I, config: Config) -> Self {
         Self {
             interface,
@@ -62,17 +81,25 @@ where
     }
 
     /// Reset the display.
-    /// This will perform a hardware reset, followed by a software reset.
     ///
-    /// This will wake a controller that has entered deep sleep.
+    /// This will perform a hardware reset, followed by a software reset.
+    /// This is useful for waking a controller that has entered deep sleep.
+    ///
+    /// # Arguments
+    ///
+    /// * `delay` - A delay implementation to use for timing.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), <I as DisplayInterface>::Error>` - Returns Ok on success, or an error if the reset fails.
     pub fn reset<D: embedded_hal::delay::DelayNs>(
         &mut self,
         delay: &mut D,
     ) -> Result<(), <I as DisplayInterface>::Error> {
-        // Do the hardware reset
+        // Perform the hardware reset
         self.interface.reset_hardware(delay);
 
-        // Do the software reset
+        // Perform the software reset
         self.interface
             .reset_software()
             .expect("Failed to soft-reset the device");
@@ -84,8 +111,14 @@ where
         self.init()
     }
 
-    /// Initialize the display controller according to the datasheet
-    /// See SSD1677 datasheet chapter 9
+    /// Initialize the display controller according to the datasheet.
+    ///
+    /// This method configures the display settings as specified in the SSD1677 datasheet,
+    /// including filling the RAM, setting the driver output control, and loading the waveform LUT.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), <I as DisplayInterface>::Error>` - Returns Ok on success, or an error if initialization fails.
     pub fn init(&mut self) -> Result<(), <I as DisplayInterface>::Error> {
         // 3. Send intialization code
         // Clear and fill RAM
@@ -143,10 +176,25 @@ where
         Ok(())
     }
 
-    /// Update the display contents by writing the supplied buffers to the controller
+    /// Update the display contents by writing the supplied buffers to the controller.
     ///
-    /// This will write the two buffers provided to the controller RAM and initializet he update.
-    /// The function will busy wait until the refresh has completed.
+    /// This function takes two optional buffers: one for the black and white pixels
+    /// and another for the red pixels. If a buffer is provided, it will be written to
+    /// the corresponding RAM of the display controller. The function will reset the
+    /// RAM address before writing the data and will busy wait until the display refresh
+    /// has completed.
+    ///
+    /// # Arguments
+    ///
+    /// * `bw_buffer` - an optional slice of bytes representing the black and white pixel data.
+    ///                 If `None`, the black and white RAM will not be updated.
+    /// * `red_buffer` - An optional slice of bytes representing the red pixel data.
+    ///                  If `None`, the red RAM will not be updated.
+    ///
+    /// # Returns
+    ///
+    /// * `Result<(), <I as DisplayInterface>::Error>` - Returns `Ok(())` on success, or an error
+    ///   if writing to the RAM or refreshing the display fails.
     pub fn update(
         &mut self,
         bw_buffer: Option<&[u8]>,
@@ -185,7 +233,7 @@ where
         }
 
         // Set the "slow" update mode
-        self.interface.update_display_option2(0xF7).unwrap();
+        // self.interface.update_display_option2(0xF7).unwrap();
 
         // Refresh the display
         self.interface

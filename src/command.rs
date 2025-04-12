@@ -1,18 +1,9 @@
+//! This module defines the commands to the [Display](crate::display::Display) and the valid options to those commands.
 use crate::interface::{DisplayInterface, Interface4Pin};
 
-// The amount of gates the SSD1677 controls, see chapter 1 in the datasheet
-const MAX_GATES: u16 = 680;
-
-trait Contains<C>
-where
-    C: Copy + PartialOrd,
-{
-    fn contains(&self, item: C) -> bool;
-}
-
 /// The address increment orientation when writing image data.
-/// This configures ohw the c4)roller auto-increments the row and column address when data is
-/// written using the `WriteImageData` command.
+/// This configures how the controller auto-increments the row and column address when data is
+/// written using the WriteImageData command.
 #[derive(Clone, Copy)]
 #[repr(u8)]
 pub enum IncrementAxis {
