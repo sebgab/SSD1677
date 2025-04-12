@@ -52,7 +52,7 @@ pub enum Rotation {
 /// [Fast]: self::DisplayUpdateMode::Fast
 pub enum DisplayUpdateMode {
     /// Perform a "fast" update, this can struggle to clear pixels
-    Fast = 0xC7,
+    Fast = 0xFF,
     /// Perform a "slow" update, this takes a while, but the result is clean
     Slow = 0xF7,
 }
@@ -70,8 +70,8 @@ where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    pub(crate) interface: I, // The interface for communicating with the display
-    config: Config,          // The display configuration
+    pub(crate) interface: I,   // The interface for communicating with the display
+    pub(crate) config: Config, // The display configuration
     _phantom: core::marker::PhantomData<SPI>, // Phantom data to hold the SPI type
 }
 

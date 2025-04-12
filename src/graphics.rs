@@ -115,8 +115,12 @@ where
             *byte = fill_value;
         }
 
-        // Refresh the display
-        self.update(DisplayUpdateMode::Slow)
+        // Refresh the display if auto_update is enabled
+        if self.display.config.auto_update {
+            self.update(DisplayUpdateMode::Slow)
+        } else {
+            Ok(())
+        }
     }
 
     /// Set a pixel at the specified coordinates to the given color.
@@ -261,9 +265,11 @@ where
             }
         }
 
-        // Refresh the display, ignoring any errors
-        // TODO: Handle errors
-        let _ = self.update(DisplayUpdateMode::Fast);
+        // Refresh the display, ignoring any errors if auto_update is enabled
+        if self.config.auto_update {
+            // TODO: Handle errors
+            let _ = self.update(DisplayUpdateMode::Fast);
+        }
 
         Ok(())
     }

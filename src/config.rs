@@ -10,6 +10,7 @@ use crate::display::{self, Dimensions, Rotation};
 pub struct Builder {
     dimensions: Option<Dimensions>,
     rotation: Rotation,
+    auto_update: bool,
 }
 
 /// Display configuration.
@@ -21,6 +22,7 @@ pub struct Builder {
 pub struct Config {
     pub(crate) dimensions: Dimensions,
     pub(crate) rotation: Rotation,
+    pub(crate) auto_update: bool,
 }
 
 /// Error returned by invalid Builder configuration.
@@ -34,6 +36,7 @@ impl Default for Builder {
         Builder {
             dimensions: None,
             rotation: Rotation::default(),
+            auto_update: true,
         }
     }
 }
@@ -97,6 +100,22 @@ impl Builder {
         Self { rotation, ..self }
     }
 
+    /// Set if the display should automatically update
+    ///
+    /// This method allows the user to control if the display should automatically update it's
+    /// contents when written to, or if the user should do this manually.
+    ///
+    /// Using the auto_update mode on is very easy and convenient, however it is currently quite
+    /// slow due to the way [embedded-graphics] draws to the display.
+    /// For a quicker user experience one should first draw using [embedded-graphics] then manually
+    /// refresh with this off.
+    pub fn auto_update(self, enabled: bool) -> Self {
+        Self {
+            auto_update: enabled,
+            ..self
+        }
+    }
+
     /// Build the display configuration.
     ///
     /// This method constructs a `Config` instance from the builder. It will fail if the
@@ -109,6 +128,7 @@ impl Builder {
         Ok(Config {
             dimensions: self.dimensions.ok_or_else(|| BuilderError {})?,
             rotation: self.rotation,
+            auto_update: self.auto_update,
         })
     }
 }
