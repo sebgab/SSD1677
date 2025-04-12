@@ -10,8 +10,8 @@
 //! This error handling mechanism allows users of the SSD1677 display driver
 //! to gracefully handle and respond to errors that may arise during
 //! operation.
+#[derive(Debug)]
 pub enum SSD1677Error {
     /// An error that occurs when there is a failure in setting a pin.
     SetPinError,
 }
-

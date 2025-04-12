@@ -14,7 +14,7 @@
 //! [DrawTarget]: https://docs.rs/embedded-graphics-core/0.4.0/embedded_graphics_core/draw_target/trait.DrawTarget.html
 //! [embedded-graphics-core]: https://crates.io/crates/embedded-graphics-core
 use crate::command::DisplayCommands;
-use crate::display::{Display, Rotation};
+use crate::display::{Display, DisplayUpdateMode, Rotation};
 use crate::interface::DisplayInterface;
 use core::usize;
 use embedded_hal;
@@ -56,12 +56,19 @@ where
     /// This method sends the current buffer to the display controller to refresh
     /// the display contents.
     ///
+    /// # Arguments
+    ///
+    /// * `mode` - The kind of update to perform, see [DisplayUpdateMode] for details.
+    ///
     /// # Returns
     ///
     /// * `Result<(), <I as DisplayInterface>::Error>` - Returns `Ok(())` on success,
     ///   or an error if the update fails.
-    pub fn update(&mut self) -> Result<(), <I as DisplayInterface>::Error> {
-        self.display.update(Some(self.bw_buffer), None)
+    pub fn update(
+        &mut self,
+        mode: DisplayUpdateMode,
+    ) -> Result<(), <I as DisplayInterface>::Error> {
+        self.display.update(Some(self.bw_buffer), None, mode)
     }
 
     #[cfg(not(feature = "graphics"))]
@@ -82,6 +89,9 @@ where
             // Set the value of the byte
             *byte = fill_value;
         }
+
+        // Refresh the display
+        self.update(DisplayUpdateMode::Slow)
     }
 
     #[cfg(feature = "graphics")]
@@ -92,7 +102,7 @@ where
     /// * `color` - The color to fill the buffer with, represented as a [BinaryColor].
     ///
     /// [BinaryColor]: https://docs.rs/embedded-graphics-core/0.4.0/embedded_graphics_core/pixelcolor/enum.BinaryColor.html
-    pub fn clear(&mut self, color: BinaryColor) {
+    pub fn clear(&mut self, color: BinaryColor) -> Result<(), <I as DisplayInterface>::Error> {
         // Figure out the fill value
         let fill_value: u8 = match color {
             BinaryColor::On => 0x00,
@@ -104,6 +114,9 @@ where
             // Set the value of the byte
             *byte = fill_value;
         }
+
+        // Refresh the display
+        self.update(DisplayUpdateMode::Slow)
     }
 
     /// Set a pixel at the specified coordinates to the given color.
@@ -250,7 +263,7 @@ where
 
         // Refresh the display, ignoring any errors
         // TODO: Handle errors
-        let _ = self.update();
+        let _ = self.update(DisplayUpdateMode::Fast);
 
         Ok(())
     }

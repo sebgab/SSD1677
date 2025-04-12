@@ -40,6 +40,23 @@ pub enum Rotation {
     Rotate270,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+/// The kind of update to do when updating the [Display].
+///
+/// The different enum values take different amount of times, and yield different quality results.
+/// - The [Slow] value ensures the entire display is clear and yields a crisp image
+/// - The [Fast] value ensures a quick update, but there may be some visual ghosting.
+///
+///
+/// [Slow]: self::DisplayUpdateMode::Slow
+/// [Fast]: self::DisplayUpdateMode::Fast
+pub enum DisplayUpdateMode {
+    /// Perform a "fast" update, this can struggle to clear pixels
+    Fast = 0xC7,
+    /// Perform a "slow" update, this takes a while, but the result is clean
+    Slow = 0xF7,
+}
+
 impl Default for Rotation {
     /// Default is no rotation
     fn default() -> Self {
@@ -53,8 +70,8 @@ where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    interface: I,   // The interface for communicating with the display
-    config: Config, // The display configuration
+    pub(crate) interface: I, // The interface for communicating with the display
+    config: Config,          // The display configuration
     _phantom: core::marker::PhantomData<SPI>, // Phantom data to hold the SPI type
 }
 
@@ -190,6 +207,7 @@ where
     ///                 If `None`, the black and white RAM will not be updated.
     /// * `red_buffer` - An optional slice of bytes representing the red pixel data.
     ///                  If `None`, the red RAM will not be updated.
+    /// * `update_mode` - The kond of update to do, see [DisplayUpdateMode]
     ///
     /// # Returns
     ///
@@ -199,6 +217,7 @@ where
         &mut self,
         bw_buffer: Option<&[u8]>,
         red_buffer: Option<&[u8]>,
+        update_mode: DisplayUpdateMode,
     ) -> Result<(), <I as DisplayInterface>::Error> {
         // Write the black and white RAM if provided
         if let Some(buffer) = bw_buffer {
@@ -232,8 +251,10 @@ where
                 .expect("Failed to write RED RAM buffer");
         }
 
-        // Set the "slow" update mode
-        // self.interface.update_display_option2(0xF7).unwrap();
+        // Set the update mode
+        self.interface
+            .update_display_option2(update_mode as u8)
+            .unwrap();
 
         // Refresh the display
         self.interface
