@@ -17,6 +17,7 @@ pub struct Dimensions {
     pub cols: u16,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// Represents the rotation of the display relative to the native orientation.
 pub enum Rotation {
     Rotate0,
@@ -204,8 +205,8 @@ where
         self.config.dimensions.cols
     }
 
-    // /// Returns the rotation the display was configured with
-    // pub fn rotation(&self) -> Rotation {
-    //
-    // }
+    /// Returns the rotation the display was configured with
+    pub fn rotation(&self) -> Rotation {
+        self.config.rotation
+    }
 }

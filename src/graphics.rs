@@ -90,26 +90,16 @@ where
     }
 
     pub fn set_pixel(&mut self, x: u32, y: u32, color: BinaryColor) {
-        // The display is by default horizontal
-
-        // TODO: Deal with rotation
-
-        // Figure out the index in the buffer to change
-        // let buffer_index =
-        //     y/8 * self.display.cols() as u32  // Skip the y directon by the number of cols per y , divide by 8 as
-        //                                     // there are 8 pixels per byte
-        //     + x/8                           // Skip the x direction, divide by 8 as there are 8 pixels
-        //                                     // per byte.
-        //     ;
-        // // Convert the index to usize
-        // let buffer_index: usize = buffer_index as usize;
-
+        let z = match self.rotation() {
+            Rotation::Rotate0 | Rotation::Rotate180 => self.cols() as u32 - x,
+            Rotation::Rotate90 | Rotation::Rotate270 => self.rows() as u32 - x,
+        };
         let (index, bit) = rotation(
-            self.cols() as u32 - x,
+            z,
             y,
             self.cols() as u32,
             self.rows() as u32,
-            Rotation::Rotate0,
+            self.rotation(),
         );
         let index = index as usize;
 
@@ -198,7 +188,13 @@ where
     I: DisplayInterface + DisplayCommands<SPI>,
 {
     fn size(&self) -> Size {
-        // TODO: Handle rotation
-        Size::new(self.cols().into(), self.rows().into())
+        match self.rotation() {
+            Rotation::Rotate0 | Rotation::Rotate180 => {
+                Size::new(self.cols().into(), self.rows().into())
+            }
+            Rotation::Rotate90 | Rotation::Rotate270 => {
+                Size::new(self.rows().into(), self.cols().into())
+            }
+        }
     }
 }

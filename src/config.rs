@@ -3,7 +3,7 @@ use crate::display::{self, Dimensions, Rotation};
 /// Builder for constructing a display config
 pub struct Builder {
     dimensions: Option<Dimensions>,
-    // rotation: Rotation,
+    rotation: Rotation,
 }
 
 /// Display configuration
@@ -11,7 +11,7 @@ pub struct Builder {
 /// Passed to `Display::new`. Use `Builder` to construct a `Config`.
 pub struct Config {
     pub(crate) dimensions: Dimensions,
-    // pub(crate) rotation: Rotation,
+    pub(crate) rotation: Rotation,
 }
 
 /// Error returned by invalid Builder configuration
@@ -24,7 +24,7 @@ impl Default for Builder {
     fn default() -> Self {
         Builder {
             dimensions: None,
-            // rotation: Rotation::default(),
+            rotation: Rotation::default(),
         }
     }
 }
@@ -65,9 +65,9 @@ impl Builder {
     /// Set the display rotation
     ///
     /// Defaults to no ratation
-    // pub fn rotation(self, rotation: Rotation) -> Self {
-    //     Self { rotation, ..self }
-    // }
+    pub fn rotation(self, rotation: Rotation) -> Self {
+        Self { rotation, ..self }
+    }
 
     /// Build the display econfig
     ///
@@ -75,7 +75,7 @@ impl Builder {
     pub fn build(self) -> Result<Config, BuilderError> {
         Ok(Config {
             dimensions: self.dimensions.ok_or_else(|| BuilderError {})?,
-            // rotation: self.rotation,
+            rotation: self.rotation,
         })
     }
 }
