@@ -22,6 +22,9 @@ use embedded_hal;
 #[cfg(feature = "graphics")]
 use embedded_graphics_core::{pixelcolor::BinaryColor, prelude::*};
 
+#[cfg(feature = "defmt")]
+use defmt::*;
+
 /// A display that holds buffers for drawing into and updating the display.
 pub struct GraphicsDisplayBlackAndWhite<'a, I, SPI>
 where
@@ -137,6 +140,15 @@ where
     ///
     /// [BinaryColor]: https://docs.rs/embedded-graphics-core/0.4.0/embedded_graphics_core/pixelcolor/enum.BinaryColor.html
     pub fn set_pixel(&mut self, x: u32, y: u32, color: BinaryColor) {
+        #[cfg(feature = "defmt")]
+        trace!(
+            "Setting pixel on (x: {}, y: {}) to `{}` with rotation {}",
+            x,
+            y,
+            color,
+            self.rotation()
+        );
+
         // Calculate the value of x depending on the rotation
         // TODO: Move into the rotation function
         let x = match self.rotation() {
@@ -153,6 +165,11 @@ where
             self.rotation(),
         );
         let index = index as usize;
+
+        #[cfg(feature = "defmt")]
+        trace!("Setting pixel on index {} to {}", index, bit);
+
+        // TODO: Add runtime check to validate that we are in bounds
 
         // Set the value in the display buffer
         match color {
@@ -220,7 +237,17 @@ fn rotation(x: u32, y: u32, width: u32, height: u32, rotation: Rotation) -> (u32
             ((width / 8) * height - 1) - (x / 8 + (width / 8) * y),
             0x01 << (x % 8),
         ),
-        Rotation::Rotate270 => (y / 8 + (height - 1 - x) * (width / 8), 0x80 >> (y % 8)),
+        Rotation::Rotate270 => {
+            let index = y / 8;
+            let height_offset = height - x;
+            let multiplier = width / 8;
+            let additive = height_offset * multiplier;
+            let index = index + additive;
+
+            let bit = 0x80 >> (y % 8);
+
+            (index, bit)
+        }
     }
 }
 
@@ -254,6 +281,9 @@ where
         Iter: IntoIterator<Item = Pixel<Self::Color>>,
     {
         let size = self.size();
+
+        #[cfg(feature = "defmt")]
+        trace!("Drawing to the display");
 
         // Draw the image pixel by pixel
         for Pixel(Point { x, y }, color) in pixels {

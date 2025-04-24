@@ -9,7 +9,13 @@ embedded-hal = "1.0.0"
 [dependencies.embedded-graphics-core]
 optional = true
 version = "0.4.0"
+features = ["defmt"]
+
+[dependencies.defmt]
+optional = true
+version = "1.0"
 
 [features]
-default = ["graphics"]
-graphics = ["embedded-graphics-core"]
+default = ["graphics", "defmt"]
+graphics = ["dep:embedded-graphics-core"]
+defmt = ["dep:defmt"]

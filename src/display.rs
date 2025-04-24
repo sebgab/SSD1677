@@ -16,6 +16,8 @@ pub const MAX_GATE_OUTPUTS: u16 = 680;
 /// Maximum number of source outputs for the display
 pub const MAX_SOURCE_OUTPUTS: u16 = 960;
 
+#[cfg(feature = "defmt")]
+#[derive(defmt::Format)]
 /// The display's dimensions
 pub struct Dimensions {
     /// The number of rows in the display
@@ -28,6 +30,8 @@ pub struct Dimensions {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg(feature = "defmt")]
+#[derive(defmt::Format)]
 /// Represents the rotation of the display relative to the native orientation.
 pub enum Rotation {
     /// No rotation
@@ -41,6 +45,8 @@ pub enum Rotation {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+#[cfg(feature = "defmt")]
+#[derive(defmt::Format)]
 /// The kind of update to do when updating the [Display].
 ///
 /// The different enum values take different amount of times, and yield different quality results.
