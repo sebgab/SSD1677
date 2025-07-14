@@ -10,7 +10,7 @@
 //! To control a display you will need:
 //! * An [Interface] to the controller
 //! * A [display configuration][Config]
-//! * A [Display]
+//! * A [BasicDisplay]
 //!
 //! The [Interface] has the hardware connection details to the SSD1677 controller. This crate only
 //! implements the 4-wire SPI communication, for this a SPI device and some GPIO pins are required.
@@ -24,21 +24,21 @@
 //! functions for supporting red color are implemented in the driver, but the [GraphicsDisplay]
 //! used to support [embedded-graphics] does not implement it at the current time.
 //!
-//! Using the [Config] from erlier create a [Display] instance.
-//! The [Display] only has basic buffer rendering capabilities.
+//! Using the [Config] from erlier create a [BasicDisplay] instance.
+//! The [BasicDisplay] only has basic buffer rendering capabilities.
 //!
-//! The [Display] can optionally be updated with [embedded-graphics] by promoting it to a
+//! The [BasicDisplay] can optionally be updated with [embedded-graphics] by promoting it to a
 //! [GraphicsDisplay].
 //!
 //! [Interface]: interface/struct.Interface4Pin.html
 //! [Config]: config/struct.Config.html
-//! [Display]: display/struct.Display.html
+//! [BasicDisplay]: basic_display/struct.BasicDisplay.html
 //! [GraphicsDisplay]: graphics/struct.GraphicsDisplayBlackAndWhite.html
 //! [embedded-graphics]: https://crates.io/crates/embedded-graphics
 
+pub mod basic_display;
 pub mod command;
 pub mod config;
-pub mod display;
 pub mod error;
 pub mod graphics;
 pub mod interface;

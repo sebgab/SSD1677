@@ -13,8 +13,8 @@
 //!
 //! [DrawTarget]: https://docs.rs/embedded-graphics-core/0.4.0/embedded_graphics_core/draw_target/trait.DrawTarget.html
 //! [embedded-graphics-core]: https://crates.io/crates/embedded-graphics-core
+use crate::basic_display::{BasicDisplay, DisplayUpdateMode, Rotation};
 use crate::command::DisplayCommands;
-use crate::display::{Display, DisplayUpdateMode, Rotation};
 use crate::interface::DisplayInterface;
 use core::usize;
 use embedded_hal;
@@ -31,9 +31,9 @@ where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    display: Display<I, SPI>, // The underlying display interface
-    bw_buffer: &'a mut [u8],  // The buffer for black and white pixel data
-                              // TODO: Implement RED support
+    display: BasicDisplay<I, SPI>, // The underlying display interface
+    bw_buffer: &'a mut [u8],       // The buffer for black and white pixel data
+                                   // TODO: Implement RED support
 }
 
 impl<'a, I, SPI> GraphicsDisplayBlackAndWhite<'a, I, SPI>
@@ -41,7 +41,7 @@ where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    /// Promote a [Display] to a [GraphicsDisplayBlackAndWhite].
+    /// Promote a [BasicDisplay] to a [GraphicsDisplayBlackAndWhite].
     ///
     /// The black and white buffer must be provided. It should be of length
     /// `rows * cols / 8`, where `rows` and `cols` are the dimensions of the display.
@@ -50,7 +50,7 @@ where
     ///
     /// * `display` - The underlying display instance.
     /// * `bw_buffer` - A mutable reference to the buffer for black and white pixel data.
-    pub fn new(display: Display<I, SPI>, bw_buffer: &'a mut [u8]) -> Self {
+    pub fn new(display: BasicDisplay<I, SPI>, bw_buffer: &'a mut [u8]) -> Self {
         GraphicsDisplayBlackAndWhite { display, bw_buffer }
     }
 
@@ -188,13 +188,13 @@ where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    type Target = Display<I, SPI>;
+    type Target = BasicDisplay<I, SPI>;
 
-    /// Dereference to access the underlying [Display] instance.
+    /// Dereference to access the underlying [BasicDisplay] instance.
     ///
     /// This allows for direct access to the methods and properties of the
-    /// [Display] struct.
-    fn deref(&self) -> &Display<I, SPI> {
+    /// [BasicDisplay] struct.
+    fn deref(&self) -> &BasicDisplay<I, SPI> {
         &self.display
     }
 }
@@ -204,10 +204,10 @@ where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    /// Mutably dereference to access the underlying [Display] instance.
+    /// Mutably dereference to access the underlying [BasicDisplay] instance.
     ///
-    /// This allows for modification of the [Display] struct and its properties.
-    fn deref_mut(&mut self) -> &mut Display<I, SPI> {
+    /// This allows for modification of the [BasicDisplay] struct and its properties.
+    fn deref_mut(&mut self) -> &mut BasicDisplay<I, SPI> {
         &mut self.display
     }
 }

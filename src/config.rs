@@ -1,10 +1,10 @@
-//! Configuration options when using `Display`.
+//! Configuration options when using [BasicDisplay].
 //!
 //! This module provides a builder pattern for constructing a display configuration
-//! that can be passed to the `Display::new` function. The `Builder` struct allows
+//! that can be passed to the `basic_display::new` function. The [Builder] struct allows
 //! users to specify the dimensions and rotation of the display, ensuring that all
-//! necessary parameters are set before creating a `Config`.
-use crate::display::{self, Dimensions, Rotation};
+//! necessary parameters are set before creating a [Config].
+use crate::basic_display::{self, Dimensions, Rotation};
 
 /// Builder for constructing a display config
 pub struct Builder {
@@ -17,7 +17,7 @@ pub struct Builder {
 ///
 /// This struct holds the configuration options for the display, including its dimensions
 /// and rotation. It is created using the [Builder] and passed to the
-/// [`Display::new`](crate::display::Display::new()) function
+/// [`basic_display::new`](crate::basic_display::basic_display::new()) function
 /// to initialize a new display instance.
 pub struct Config {
     pub(crate) dimensions: Dimensions,
@@ -59,8 +59,8 @@ impl Builder {
     ///
     /// This method will panic if the specified dimensions do not meet the following criteria:
     /// - The number of columns must be evenly divisible by 8.
-    /// - The number of rows must be less than or equal to `display::MAX_GATE_OUTPUTS`.
-    /// - The number of columns must be less than or equal to `display::MAX_SOURCE_OUTPUTS`.
+    /// - The number of rows must be less than or equal to `basic_display::MAX_GATE_OUTPUTS`.
+    /// - The number of columns must be less than or equal to `basic_display::MAX_SOURCE_OUTPUTS`.
     ///
     /// # Arguments
     ///
@@ -73,12 +73,12 @@ impl Builder {
         ); // TODO: Figure out if this is required for SSD1677, or if it is just for SSD1675
 
         assert!(
-            dimensions.rows <= display::MAX_GATE_OUTPUTS,
+            dimensions.rows <= basic_display::MAX_GATE_OUTPUTS,
             "rows must be less thn MAX_GATE_OUTPUTS"
         );
 
         assert!(
-            dimensions.cols <= display::MAX_SOURCE_OUTPUTS,
+            dimensions.cols <= basic_display::MAX_SOURCE_OUTPUTS,
             "cols must be less than MAX_SOURCE_OUTPUTS"
         );
 

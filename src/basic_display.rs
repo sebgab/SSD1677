@@ -1,8 +1,8 @@
 //! This module provides the structures and functionality for managing a display
 //! using the SSD1677 controller. It includes definitions for display dimensions,
-//! rotation options, and the main [Display] struct that interfaces with the hardware.
+//! rotation options, and the main [BasicDisplay] struct that interfaces with the hardware.
 //!
-//! The [Display] struct is responsible for initializing the display, resetting it,
+//! The [BasicDisplay] struct is responsible for initializing the display, resetting it,
 //! and updating its contents. It uses a generic interface that implements the
 //! [DisplayInterface] and [DisplayCommands] traits, allowing for flexibility in
 //! hardware implementations.
@@ -47,7 +47,7 @@ pub enum Rotation {
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg(feature = "defmt")]
 #[derive(defmt::Format)]
-/// The kind of update to do when updating the [Display].
+/// The kind of update to do when updating the [BasicDisplay].
 ///
 /// The different enum values take different amount of times, and yield different quality results.
 /// - The [Slow] value ensures the entire display is clear and yields a crisp image
@@ -71,7 +71,7 @@ impl Default for Rotation {
 }
 
 /// A configured display with a hardware interface
-pub struct Display<I, SPI>
+pub struct BasicDisplay<I, SPI>
 where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
@@ -81,7 +81,7 @@ where
     _phantom: core::marker::PhantomData<SPI>, // Phantom data to hold the SPI type
 }
 
-impl<I, SPI> Display<I, SPI>
+impl<I, SPI> BasicDisplay<I, SPI>
 where
     I: DisplayInterface + DisplayCommands<SPI>,
     SPI: embedded_hal::spi::SpiDevice,

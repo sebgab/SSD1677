@@ -1,4 +1,4 @@
-//! This module defines the commands to the [Display](crate::display::Display) and the valid options to those commands.
+//! This module defines the commands to the [BasicDisplay](crate::basic_display::BasicDisplay) and the valid options to those commands.
 use crate::interface::{DisplayInterface, Interface4Pin};
 
 /// The address increment orientation when writing image data.
