@@ -1,7 +1,7 @@
-//! This module provides the [GraphicsDisplayBlackAndWhite] struct for managing
+//! This module provides the [Display] struct for managing
 //! a black and white display with graphics capabilities.
 //!
-//! When the `graphics` feature is enabled, [GraphicsDisplayBlackAndWhite] implements
+//! When the `graphics` feature is enabled, [Display] implements
 //! the [DrawTarget] trait from the [embedded-graphics-core] crate, allowing for rendering
 //! shapes and text on the display. The struct holds a buffer for drawing and updating
 //! the display contents.
@@ -15,6 +15,7 @@
 //! [embedded-graphics-core]: https://crates.io/crates/embedded-graphics-core
 use crate::basic_display::{BasicDisplay, DisplayUpdateMode, Rotation};
 use crate::command::DisplayCommands;
+use crate::config;
 use crate::interface::DisplayInterface;
 use core::usize;
 use embedded_hal;
@@ -26,7 +27,7 @@ use embedded_graphics_core::{pixelcolor::BinaryColor, prelude::*};
 use defmt::*;
 
 /// A display that holds buffers for drawing into and updating the display.
-pub struct GraphicsDisplayBlackAndWhite<'a, I, SPI>
+pub struct Display<'a, I, SPI>
 where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
@@ -36,12 +37,42 @@ where
                                    // TODO: Implement RED support
 }
 
-impl<'a, I, SPI> GraphicsDisplayBlackAndWhite<'a, I, SPI>
+impl<'a, I, SPI> Display<'a, I, SPI>
 where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
 {
-    /// Promote a [BasicDisplay] to a [GraphicsDisplayBlackAndWhite].
+    /// Creates a new [Display] instance.
+    ///
+    /// This function initializes a [Display] by first creating a [BasicDisplay] using the provided
+    /// interface and configuration. It then promotes the basic display to a full [Display]
+    /// instance, utilizing the provided mutable buffer for black-and-white pixel data.
+    ///
+    /// # Parameters
+    ///
+    /// - `interface`: An instance of the interface type `I` that will be used for communication
+    ///   with the display hardware, such as [Interface4Pin].
+    /// - `bw_buffer`: A mutable reference to a byte slice (`&'a mut [u8]`) that serves as the
+    ///   buffer for storing black-and-white pixel data. This buffer must be large enough to hold
+    ///   the pixel data for the display.
+    /// - `config`: An instance of [Config] that contains the configuration settings for
+    ///   the display, such as resolution, refresh rate, and other display parameters.
+    ///
+    /// # Returns
+    ///
+    /// Returns a new [Display] instance that is ready for use.
+    ///
+    /// [Interface4Pin]: crate::interface::Interface4Pin
+    /// [Config]: crate::config::Config
+    pub fn new(interface: I, bw_buffer: &'a mut [u8], config: config::Config) -> Self {
+        // First create a basic display
+        let d = BasicDisplay::new(interface, config);
+
+        // Promote the basic display to a Display
+        Display::from_basic_display(d, bw_buffer)
+    }
+
+    /// Promote a [BasicDisplay] to a [Display].
     ///
     /// The black and white buffer must be provided. It should be of length
     /// `rows * cols / 8`, where `rows` and `cols` are the dimensions of the display.
@@ -50,8 +81,8 @@ where
     ///
     /// * `display` - The underlying display instance.
     /// * `bw_buffer` - A mutable reference to the buffer for black and white pixel data.
-    pub fn new(display: BasicDisplay<I, SPI>, bw_buffer: &'a mut [u8]) -> Self {
-        GraphicsDisplayBlackAndWhite { display, bw_buffer }
+    pub fn from_basic_display(display: BasicDisplay<I, SPI>, bw_buffer: &'a mut [u8]) -> Self {
+        Display { display, bw_buffer }
     }
 
     /// Update the display by writing the buffer to the controller.
@@ -183,7 +214,7 @@ where
     }
 }
 
-impl<'a, I, SPI> core::ops::Deref for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+impl<'a, I, SPI> core::ops::Deref for Display<'a, I, SPI>
 where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
@@ -199,7 +230,7 @@ where
     }
 }
 
-impl<'a, I, SPI> core::ops::DerefMut for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+impl<'a, I, SPI> core::ops::DerefMut for Display<'a, I, SPI>
 where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
@@ -252,7 +283,7 @@ fn rotation(x: u32, y: u32, width: u32, height: u32, rotation: Rotation) -> (u32
 }
 
 #[cfg(feature = "graphics")]
-impl<'a, I, SPI> DrawTarget for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+impl<'a, I, SPI> DrawTarget for Display<'a, I, SPI>
 where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,
@@ -306,7 +337,7 @@ where
 }
 
 #[cfg(feature = "graphics")]
-impl<'a, I, SPI> OriginDimensions for GraphicsDisplayBlackAndWhite<'a, I, SPI>
+impl<'a, I, SPI> OriginDimensions for Display<'a, I, SPI>
 where
     SPI: embedded_hal::spi::SpiDevice,
     I: DisplayInterface + DisplayCommands<SPI>,

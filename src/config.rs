@@ -4,6 +4,8 @@
 //! that can be passed to the `basic_display::new` function. The [Builder] struct allows
 //! users to specify the dimensions and rotation of the display, ensuring that all
 //! necessary parameters are set before creating a [Config].
+//!
+//! [BasicDisplay]: basic_display/struct.BasicDisplay.html
 use crate::basic_display::{self, Dimensions, Rotation};
 
 /// Builder for constructing a display config
@@ -17,7 +19,7 @@ pub struct Builder {
 ///
 /// This struct holds the configuration options for the display, including its dimensions
 /// and rotation. It is created using the [Builder] and passed to the
-/// [`basic_display::new`](crate::basic_display::basic_display::new()) function
+/// [`basic_display::new`](crate::basic_display::BasicDisplay::new()) function
 /// to initialize a new display instance.
 pub struct Config {
     pub(crate) dimensions: Dimensions,

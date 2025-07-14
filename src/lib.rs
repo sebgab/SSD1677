@@ -21,24 +21,25 @@
 //!
 //! The SSD1677 controller can control many different displays of varying sizes and color
 //! capabilities. This driver should work on any size display the controller can do, the underlying
-//! functions for supporting red color are implemented in the driver, but the [GraphicsDisplay]
+//! functions for supporting red color are implemented in the driver, but the [Display]
 //! used to support [embedded-graphics] does not implement it at the current time.
 //!
 //! Using the [Config] from erlier create a [BasicDisplay] instance.
 //! The [BasicDisplay] only has basic buffer rendering capabilities.
 //!
 //! The [BasicDisplay] can optionally be updated with [embedded-graphics] by promoting it to a
-//! [GraphicsDisplay].
+//! [Display].
 //!
 //! [Interface]: interface/struct.Interface4Pin.html
 //! [Config]: config/struct.Config.html
 //! [BasicDisplay]: basic_display/struct.BasicDisplay.html
-//! [GraphicsDisplay]: graphics/struct.GraphicsDisplayBlackAndWhite.html
+//! [Display]: display/struct.Display.html
 //! [embedded-graphics]: https://crates.io/crates/embedded-graphics
+//! [Builder]: confg/struct.Builder.html
 
 pub mod basic_display;
 pub mod command;
 pub mod config;
+pub mod display;
 pub mod error;
-pub mod graphics;
 pub mod interface;
