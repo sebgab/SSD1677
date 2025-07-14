@@ -180,13 +180,6 @@ where
             self.rotation()
         );
 
-        // Calculate the value of x depending on the rotation
-        // TODO: Move into the rotation function
-        let x = match self.rotation() {
-            Rotation::Rotate0 | Rotation::Rotate180 => self.cols() as u32 - x,
-            Rotation::Rotate90 | Rotation::Rotate270 => self.rows() as u32 - x,
-        };
-
         // Find out the buffer index and bit value
         let (index, bit) = rotation(
             x,
@@ -261,6 +254,12 @@ where
 ///
 /// * `(u32, u8)` - A tuple containing the index in the buffer and the bit mask for the pixel.
 fn rotation(x: u32, y: u32, width: u32, height: u32, rotation: Rotation) -> (u32, u8) {
+    // Calculate the value of x depending on the rotation
+    let x = match rotation {
+        Rotation::Rotate0 | Rotation::Rotate180 => width as u32 - x,
+        Rotation::Rotate90 | Rotation::Rotate270 => height as u32 - x,
+    };
+
     match rotation {
         Rotation::Rotate0 => (x / 8 + (width / 8) * y, 0x80 >> (x % 8)),
         Rotation::Rotate90 => ((width - 1 - y) / 8 + (width / 8) * x, 0x01 << (y % 8)),
