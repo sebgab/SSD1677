@@ -43,3 +43,7 @@ pub mod config;
 pub mod display;
 pub mod error;
 pub mod interface;
+
+pub use basic_display::{Dimensions, Rotation};
+pub use config::{Builder as ConfigBuilder, Config};
+pub use display::Display;
