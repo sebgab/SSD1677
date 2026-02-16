@@ -10,8 +10,7 @@ The following examples are provided:
 
 For all examples the STM32 is connected to the display as follows:
 
-![Image showing the connections between the STM and the Display](./images/ssd1677 connection diagram.svg)
-<img src="./images/ssd1677 connection diagram.svg">
+![Image showing the connections between the STM and the Display](./images/ssd1677 connection diagram.jpg)
 
 ## Embedded Graphics Example
 
