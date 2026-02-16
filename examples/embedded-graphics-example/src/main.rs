@@ -7,12 +7,12 @@ use defmt::{debug, error, info, trace, warn};
 use embassy_embedded_hal::shared_bus::blocking::spi::SpiDeviceWithConfig;
 use embassy_executor::Spawner;
 use embassy_stm32::{
+    Peri,
     gpio::{self, AnyPin, Input, Level, Output},
     spi::{self, Spi},
     time::Hertz,
-    Peri,
 };
-use embassy_sync::blocking_mutex::{raw::NoopRawMutex, NoopMutex};
+use embassy_sync::blocking_mutex::{NoopMutex, raw::NoopRawMutex};
 use embassy_time::{Delay, Timer};
 use embedded_graphics::{
     mono_font::MonoTextStyle,
@@ -194,8 +194,8 @@ where
     let fill = PrimitiveStyle::with_fill(BinaryColor::On);
     let character_style = MonoTextStyle::new(&PROFONT_24_POINT, BinaryColor::On);
 
-    let yoffset = 256;
-    const ICON_SIZE: u16 = 128;
+    const ICON_SIZE: u16 = 96;
+    let yoffset = ICON_SIZE + ICON_SIZE / 4;
 
     // Draw a 3px wide outline around the display.
     debug!("Drawing bounding box");
@@ -204,12 +204,19 @@ where
         .into_styled(border_stroke)
         .draw(display)?;
 
+    // Get the cener of the screen to position characters
+    let center_point = display.bounding_box().center();
+
     // Draw a triangle.
     debug!("Drawing triangle");
     Triangle::new(
-        Point::new(16, (ICON_SIZE + yoffset).into()),
-        Point::new((16 + ICON_SIZE).into(), (ICON_SIZE + yoffset).into()),
-        Point::new((16 + ICON_SIZE / 2).into(), yoffset.into()),
+        center_point - Point::new(ICON_SIZE.into(), yoffset.into()),
+        center_point - Point::new((ICON_SIZE * 2).into(), yoffset.into()),
+        center_point
+            - Point::new(
+                (ICON_SIZE + ICON_SIZE / 2).into(),
+                (yoffset - ICON_SIZE).into(),
+            ),
     )
     .into_styled(thin_stroke)
     .draw(display)?;
@@ -217,7 +224,7 @@ where
     // Draw a filled square
     debug!("Drawing square");
     Rectangle::new(
-        Point::new((48 + ICON_SIZE).into(), yoffset.into()),
+        center_point - Point::new((ICON_SIZE / 2).into(), yoffset.into()),
         Size::new(ICON_SIZE.into(), ICON_SIZE.into()),
     )
     .into_styled(fill)
@@ -226,7 +233,7 @@ where
     // Draw a circle with a 3px wide stroke.
     debug!("Drawing circle");
     Circle::new(
-        Point::new((80 + ICON_SIZE * 2).into(), yoffset.into()),
+        center_point + Point::new(ICON_SIZE.into(), -<u16 as Into<i32>>::into(yoffset)),
         ICON_SIZE.into(),
     )
     .into_styled(thick_stroke)
@@ -237,7 +244,7 @@ where
     let text = "embedded-graphics\nSSD1677";
     Text::with_alignment(
         text,
-        display.bounding_box().center() + Point::new(0, 15),
+        center_point + Point::new(0, 15),
         character_style,
         Alignment::Center,
     )
