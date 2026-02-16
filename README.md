@@ -1,3 +1,9 @@
+# THIS DRIVER IS NOW MAINTEAINED ON [CODEBERG](https://codeberg.org/sebgab/SSD1677)
+
+This driver is no longer maintained on GitHub, all development activity has been moved to [CODEBERG](https://codeberg.org/sebgab/SSD1677).
+
+-------------------
+
 # SSD1677 driver
 
 Blocking SPI driver to use SSD1677 e-paper displays in embedded Rust.  
