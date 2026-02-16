@@ -8,6 +8,9 @@ The following examples are provided:
 - [Embedded Graphics Example](#embedded-graphics-example)
 - [Clock Example](#clock-example)
 
+For all examples the STM32 is connected to the display as follows:
+
+![Image showing the connections between the STM and the Display](./images/ssd1677 connection diagram.svg)
 
 ## Embedded Graphics Example
 
