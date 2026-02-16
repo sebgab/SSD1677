@@ -8,6 +8,9 @@
    id="svg237"
    sodipodi:docname="ssd1677 connection diagram.svg"
    inkscape:version="1.4.3 (unknown)"
+   inkscape:export-filename="ssd1677 connection diagram.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -42,6 +45,18 @@
        margin="0"
        bleed="0" />
   </sodipodi:namedview>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Layer 1">
+    <rect
+       style="fill:#ffffff;stroke:#000000;stroke-width:0.75"
+       id="rect237"
+       width="546.54944"
+       height="264.7879"
+       x="-55.447044"
+       y="-31.684025" />
+  </g>
   <g
      id="g196"
      transform="translate(-70.366142,-70.366142)">
