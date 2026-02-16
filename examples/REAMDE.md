@@ -1,6 +1,13 @@
 # SSD1677 Examples
 
-This folder contains examples for using the SSD1677 display driver.
+This folder contains examples showing how to use the SSD1677 crate on an STM32U575 with
+[Embassy](https://embassy.dev/).  
+
+The following examples are provided:
+
+- [Embedded Graphics Example](#embedded-graphics-example)
+- [Clock Example](#clock-example)
+
 
 ## Embedded Graphics Example
 
@@ -14,4 +21,5 @@ This folder contains examples for using the SSD1677 display driver.
 [This example](./clock/) shows an incrementing clock.
 The clock increments once per second, and is capable of counting up to 255 days.
 
-![Image of the Clock Demo, showing the time "000:00:00:00"](./images/clock_example.jpg)
+![Image of the Clock Demo, showing the time "000:00:00:15", aka having counted 15 seconds](./images/clock_example.jpg)
+
