@@ -7,15 +7,15 @@ use defmt::{debug, error, info, trace, warn};
 use embassy_embedded_hal::shared_bus::blocking::spi::SpiDeviceWithConfig;
 use embassy_executor::Spawner;
 use embassy_stm32::{
-    Peri,
     gpio::{self, AnyPin, Input, Level, Output},
     spi::{self, Spi},
     time::Hertz,
+    Peri,
 };
-use embassy_sync::blocking_mutex::{NoopMutex, raw::NoopRawMutex};
+use embassy_sync::blocking_mutex::{raw::NoopRawMutex, NoopMutex};
 use embassy_time::{Delay, Timer};
 use embedded_graphics::{
-    mono_font::{MonoTextStyle, ascii::FONT_6X10},
+    mono_font::MonoTextStyle,
     pixelcolor::BinaryColor,
     prelude::*,
     primitives::{
@@ -23,7 +23,7 @@ use embedded_graphics::{
     },
     text::{Alignment, Text},
 };
-use embedded_graphics_core;
+use profont::PROFONT_24_POINT;
 use ssd1677::{self, interface::Interface4Pin};
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
@@ -76,9 +76,22 @@ pub async fn gui_task(
 
     info!("Initialised display");
 
+    display.clear(BinaryColor::Off).unwrap();
+    display
+        .update(ssd1677::basic_display::DisplayUpdateMode::Slow)
+        .unwrap();
+
+    info!("Cleared display");
+
     draw_embedded_graphics_demo(&mut display).unwrap();
 
     info!("Drew demo");
+
+    display
+        .update(ssd1677::basic_display::DisplayUpdateMode::Slow)
+        .unwrap();
+
+    info!("Updated display");
 
     loop {
         // TODO: Make loop do something cool
@@ -171,45 +184,57 @@ where
     Infallible: From<<D as DrawTarget>::Error>,
 {
     // Create styles used by the drawing operations.
-    let thin_stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 1);
-    let thick_stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 3);
+    let thin_stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 6);
+    let thick_stroke = PrimitiveStyle::with_stroke(BinaryColor::On, 12);
     let border_stroke = PrimitiveStyleBuilder::new()
         .stroke_color(BinaryColor::On)
-        .stroke_width(3)
+        .stroke_width(6)
         .stroke_alignment(StrokeAlignment::Inside)
         .build();
     let fill = PrimitiveStyle::with_fill(BinaryColor::On);
-    let character_style = MonoTextStyle::new(&FONT_6X10, BinaryColor::On);
+    let character_style = MonoTextStyle::new(&PROFONT_24_POINT, BinaryColor::On);
 
-    let yoffset = 10;
+    let yoffset = 256;
+    const ICON_SIZE: u16 = 128;
 
     // Draw a 3px wide outline around the display.
+    debug!("Drawing bounding box");
     display
         .bounding_box()
         .into_styled(border_stroke)
         .draw(display)?;
 
     // Draw a triangle.
+    debug!("Drawing triangle");
     Triangle::new(
-        Point::new(16, 16 + yoffset),
-        Point::new(16 + 16, 16 + yoffset),
-        Point::new(16 + 8, yoffset),
+        Point::new(16, (ICON_SIZE + yoffset).into()),
+        Point::new((16 + ICON_SIZE).into(), (ICON_SIZE + yoffset).into()),
+        Point::new((16 + ICON_SIZE / 2).into(), yoffset.into()),
     )
     .into_styled(thin_stroke)
     .draw(display)?;
 
     // Draw a filled square
-    Rectangle::new(Point::new(52, yoffset), Size::new(16, 16))
-        .into_styled(fill)
-        .draw(display)?;
+    debug!("Drawing square");
+    Rectangle::new(
+        Point::new((48 + ICON_SIZE).into(), yoffset.into()),
+        Size::new(ICON_SIZE.into(), ICON_SIZE.into()),
+    )
+    .into_styled(fill)
+    .draw(display)?;
 
     // Draw a circle with a 3px wide stroke.
-    Circle::new(Point::new(88, yoffset), 17)
-        .into_styled(thick_stroke)
-        .draw(display)?;
+    debug!("Drawing circle");
+    Circle::new(
+        Point::new((80 + ICON_SIZE * 2).into(), yoffset.into()),
+        ICON_SIZE.into(),
+    )
+    .into_styled(thick_stroke)
+    .draw(display)?;
 
     // Draw centered text.
-    let text = "embedded-graphics";
+    debug!("Drawing text");
+    let text = "embedded-graphics\nSSD1677";
     Text::with_alignment(
         text,
         display.bounding_box().center() + Point::new(0, 15),

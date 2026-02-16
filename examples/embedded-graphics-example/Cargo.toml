@@ -32,6 +32,7 @@ static_cell = "2.1.0"
 ssd1677 = { path="../../" }
 embedded-graphics = "0.8.1"
 embedded-graphics-core = "0.4.0"
+profont = "0.7.0"
 
 [profile.release]
 debug = 2
