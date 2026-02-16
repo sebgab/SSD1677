@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use core::{cell::RefCell, convert::Infallible};
+use core::cell::RefCell;
 use defmt::Format;
 #[allow(unused_imports)]
 use defmt::{debug, error, info, trace, warn};
@@ -16,16 +16,11 @@ use embassy_stm32::{
 use embassy_sync::blocking_mutex::{NoopMutex, raw::NoopRawMutex};
 use embassy_time::{Delay, Duration, Instant, Timer};
 use embedded_graphics::{
-    mono_font::MonoTextStyle,
     pixelcolor::BinaryColor,
     prelude::*,
-    primitives::{
-        Circle, PrimitiveStyle, PrimitiveStyleBuilder, Rectangle, StrokeAlignment, Triangle,
-    },
     text::{Alignment, Text},
 };
 use heapless::String;
-use profont::PROFONT_24_POINT;
 use ssd1677::{self, interface::Interface4Pin};
 use static_cell::StaticCell;
 use u8g2_fonts::{U8g2TextStyle, fonts};
