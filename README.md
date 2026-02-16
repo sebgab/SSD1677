@@ -20,6 +20,8 @@ Not implemented:
 The following section will show a simplified example based on the example in the `exmaples` directory.
 This snippet will not compile by itself and is only intended as a basic example of how the display can be initialised.
 
+For more usage see the [Examples folder](./examples/).
+
 ```rust
 use ssd1677::{self, interface::Interface4Pin};
 
@@ -53,6 +55,12 @@ fn main() -> ! {
 
     // Reset the display so it is ready for use
     display.reset(&mut Delay).expect("Failed to reset display");
+
+    // Clear the display
+    display.clear(BinaryColor::Off).unwrap();
+    display
+        .update(ssd1677::basic_display::DisplayUpdateMode::Slow)
+        .unwrap();
 
     // You now have an initialised display, you can now draw to 
     // the display using embedded graphics.
