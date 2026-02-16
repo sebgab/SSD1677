@@ -254,31 +254,23 @@ where
 ///
 /// * `(u32, u8)` - A tuple containing the index in the buffer and the bit mask for the pixel.
 fn rotation(x: u32, y: u32, width: u32, height: u32, rotation: Rotation) -> (u32, u8) {
-    // Calculate the value of x depending on the rotation
-    let x = match rotation {
-        Rotation::Rotate0 | Rotation::Rotate180 => width as u32 - x,
-        Rotation::Rotate90 | Rotation::Rotate270 => height as u32 - x,
+    // Map logical to physical, then invert Y for Cartesian display
+    let (px, py) = match rotation {
+        Rotation::Rotate0 => (x, y),
+        Rotation::Rotate90 => (y, height - 1 - x),
+        Rotation::Rotate180 => (width - 1 - x, height - 1 - y),
+        Rotation::Rotate270 => (width - 1 - y, x),
     };
 
-    match rotation {
-        Rotation::Rotate0 => (x / 8 + (width / 8) * y, 0x80 >> (x % 8)),
-        Rotation::Rotate90 => ((width - 1 - y) / 8 + (width / 8) * x, 0x01 << (y % 8)),
-        Rotation::Rotate180 => (
-            ((width / 8) * height - 1) - (x / 8 + (width / 8) * y),
-            0x01 << (x % 8),
-        ),
-        Rotation::Rotate270 => {
-            let index = y / 8;
-            let height_offset = height - x;
-            let multiplier = width / 8;
-            let additive = height_offset * multiplier;
-            let index = index + additive;
+    // Invert Y: (0,0) at bottom-left → (0,0) at top-left
+    let phys_x = px;
+    let phys_y = height - 1 - py;
 
-            let bit = 0x80 >> (y % 8);
+    let bytes_per_row = width / 8;
+    let byte_index = phys_y * bytes_per_row + (phys_x / 8);
+    let bit_mask = 0x80 >> (phys_x % 8); // or 0x01 << based on your earlier test
 
-            (index, bit)
-        }
-    }
+    (byte_index, bit_mask)
 }
 
 #[cfg(feature = "graphics")]
